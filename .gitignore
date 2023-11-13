@@ -1,0 +1,11 @@
+./.gitignore
+./logs
+logs/
+./upload
+upload/
+download/
+./download
+api_dev.sh
+v2/application/config/database.php
+j.sh
+./.vscode
