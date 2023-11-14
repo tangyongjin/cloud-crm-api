@@ -15,7 +15,7 @@ class Curd extends MY_Controller {
     }
 
     public function listData() {
-
+        $startTime = microtime(true);
         $ret = [];
         $post = file_get_contents('php://input');
         $para = (array) json_decode($post);
@@ -41,7 +41,9 @@ class Curd extends MY_Controller {
         $ret['rows'] = count($result2['realrows']);
         $ret['sql'] = $result2['lastsql'];
         $ret['debug'] = $result2;
-
+        $endTime = microtime(true);
+        $execTime = $endTime - $startTime;
+        $ret['executeTime'] = $execTime;
         echo json_encode($ret);
     }
 
