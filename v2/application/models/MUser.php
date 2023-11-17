@@ -3,8 +3,9 @@
 class MUser  extends CI_Model {
 
 
-  public function userprofile($user) {
+  public function getUserProfile($user) {
     $userinfo = $this->db->get_where('nanx_user', ['user' => $user])->row_array();
+    // debug($userinfo);
 
 
     $role = $this->getUserRole($user);
@@ -19,15 +20,11 @@ class MUser  extends CI_Model {
       'department' => $deptname,
       'staff_name'    => $userinfo['staff_name'],
       'staff_id'      => $userinfo['id'],
-      'wx_nickname' => $userinfo['wx_nickname'],
-      'wx_avatar' => $userinfo['wx_avatar'],
       'mobile' => $userinfo['mobile'],
       'email' => $userinfo['email'],
       'role_code'     => $role['role_code'],
       'role_name'     => $role['role_name'],
       'head_portrait' => $head_portrait,
-      'receive_mail_notify'     => $userinfo['receive_mail_notify'],
-      'receive_sms_notify' => $userinfo['receive_sms_notify'],
     );
 
     return $ret;
@@ -40,24 +37,25 @@ class MUser  extends CI_Model {
   }
 
 
-  private function getUserPortrait($userinfo) {
+  public function getUserPortrait($userinfo) {
 
     if (is_null($userinfo['head_portrait'])) {
-      $head_portrait = 'http://' . $_SERVER['HTTP_HOST'] . '/upload/common_avatar.png';
-    } else {
-      if (strpos($userinfo['head_portrait'], 'http://') === false) {
-        $head_portrait =  $userinfo['head_portrait'];
-      } else {
-        $head_portrait = 'http://' . $_SERVER['HTTP_HOST'] . $userinfo['head_portrait'];
-      }
+      $head_portrait = '/avatar/common_avatar.png';
+      return $head_portrait;
     }
-    return $head_portrait;
+    if ($userinfo['head_portrait'] == '') {
+      $head_portrait = '/avatar/common_avatar.png';
+      return $head_portrait;
+    }
+
+    return $userinfo['head_portrait'];
   }
 
 
   public function getUserRole($user) {
 
-    $sql = "select  nanx_user_role_assign.role_code,role_name
+    $sql = "select  nanx_user_role_assign.id, nanx_user_role_assign.role_code,
+              role_name,nanx_user_role_assign.user 
               from nanx_user_role_assign,nanx_user_role
               where user='{$user}'
               and   nanx_user_role.role_code=nanx_user_role_assign.role_code limit 1";
