@@ -19,50 +19,34 @@ class File extends MY_Controller {
     }
   }
 
-  public function uploadAvatar() {
-
-
-    $mobile = $this->getMobile();
-
-
-
+  public function uploadAction($FILES, $action) {
 
     $uploadPath = '/var/www/html/upload';
     $date_folder = $this->create_date_folder($uploadPath);
+    $files_from_client  = [];
 
-    // 检查完毕.
-    $files_from_client = [];
-
-    foreach ($_FILES as $file) {
-
-      $this->check_one($file, 'avatar');
-
+    foreach ($FILES as $file) {
+      $this->check_one($file, $action);
       $filename_with_date = $this->get_new_name($file);
       $destFileName = $uploadPath . $date_folder . '/' . $filename_with_date;
-      $files_from_client[] = [
-        'name' => $filename_with_date,
-        'file' =>   $destFileName,
-        'url' =>   'upload' . $date_folder . '/' . $filename_with_date
-      ];
-
       if (!move_uploaded_file($file['tmp_name'], $destFileName)) {
         $ret = ['code' => 500, 'message' => $file['name'] . '文件上传失败'];
         echo json_encode($ret, JSON_UNESCAPED_UNICODE);
         die;
+      } else {
+        $files_from_client[] = [
+          'name' => $filename_with_date,
+          'file' =>   $destFileName,
+          'url' =>   'upload' . $date_folder . '/' . $filename_with_date
+        ];
       }
     }
 
-    if (count($files_from_client) >= 1) {
-      $this->db->where('mobile', $mobile);
-      $fname = $files_from_client[0]['url'];
-      $this->db->update('nanx_user', ['head_portrait' => $fname]);
-    }
-
-
-    $ret = ['code' => 200, 'data' => $files_from_client, 'message' => '头像上传成功'];
-    echo json_encode($ret, JSON_UNESCAPED_UNICODE);
-    die;
+    return $files_from_client;
   }
+
+
+
 
   public function create_date_folder($uploadPath) {
     $dateFolder =   '/' . date('Y') . '/' . date('m') . '/' . date('d');
@@ -128,7 +112,7 @@ class File extends MY_Controller {
 
     // 后缀检查,不使用mime_content_type, mime_content_type 可能有错误返回.
     $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'icon'];  //图片
-    $office_extensions = ['pdf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'ppt']; // 办公文档
+    $office_extensions = ['pdf', 'txt', 'doc', 'docx', 'xls', 'csv', 'xlsx', 'ppt']; // 办公文档
     $all_extensions = array_merge($image_extensions, $office_extensions);
     if ($upload_action === 'avatar') {
       if (!in_array($extension, $image_extensions)) {
@@ -165,5 +149,36 @@ class File extends MY_Controller {
     }
 
     return $val;
+  }
+
+
+
+  public function uploadAvatar() {
+    $mobile = $this->getMobile();
+    $files_from_client = $this->uploadAction($_FILES, 'avatar');
+    if (count($files_from_client) >= 1) {
+      $this->db->where('mobile', $mobile);
+      $fname = $files_from_client[0]['url'];
+      $this->db->update('nanx_user', ['head_portrait' => $fname]);
+    }
+    $ret = ['code' => 200, 'data' => $files_from_client, 'message' => '头像上传/设置成功'];
+    echo json_encode($ret, JSON_UNESCAPED_UNICODE);
+    die;
+  }
+
+
+  public function uploadPicture() {
+    $files_from_client = $this->uploadAction($_FILES, 'image');
+    $ret = ['code' => 200, 'data' => $files_from_client, 'message' => '图片上传成功'];
+    echo json_encode($ret, JSON_UNESCAPED_UNICODE);
+    die;
+  }
+
+
+  public function uploadOfficeFile() {
+    $files_from_client = $this->uploadAction($_FILES, 'office');
+    $ret = ['code' => 200, 'data' => $files_from_client, 'message' => '文件上传成功'];
+    echo json_encode($ret, JSON_UNESCAPED_UNICODE);
+    die;
   }
 }

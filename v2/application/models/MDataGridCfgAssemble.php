@@ -32,13 +32,18 @@ class MDataGridCfgAssemble extends CI_Model {
             })
 
             ->pipe(function ($config) {
+                $this->MDataGridCfgExecutor->reorderColumns();
+            })
+
+
+            ->pipe(function ($config) {
                 $this->MDataGridCfgExecutor->setColumnHiddenCols();
             })
             ->pipe(function ($config) {
                 $this->MDataGridCfgExecutor->setFormHiddenCols();
             })
             ->pipe(function ($config) {
-                $this->MDataGridCfgExecutor->setTableColumnConfig();
+                $this->MDataGridCfgExecutor->setTableColumnRender();
             })
             ->pipe(function ($config) {
                 $this->MDataGridCfgExecutor->setFormUsedColumns();

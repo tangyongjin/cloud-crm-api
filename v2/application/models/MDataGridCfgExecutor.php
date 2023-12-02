@@ -89,6 +89,7 @@ class MDataGridCfgExecutor extends CI_Model implements StageInterface {
         $base_table =   $this->payload['base_table'];
         $all_db_fields =    $this->db->query("show full fields  from $base_table")->result_array();
         $this->payload['total_cols_cfg']  = $this->MFieldcfg->getAllColsCfg($datagrid_code, $base_table, $all_db_fields);
+        // debug($this->payload['total_cols_cfg']);
     }
 
     public function  setColumnHiddenCols() {
@@ -104,7 +105,7 @@ class MDataGridCfgExecutor extends CI_Model implements StageInterface {
     }
 
 
-    public function setTableColumnConfig() {
+    public function setTableColumnRender() {
         $cols = [];
         foreach ($this->payload['total_cols_cfg']  as $col) {
             if (!in_array($col['field_e'], array_column($this->payload['gridHiddenColumns'], 'field'))) {
@@ -123,6 +124,17 @@ class MDataGridCfgExecutor extends CI_Model implements StageInterface {
     }
 
 
+
+
+    public function reorderColumns() {
+
+
+        $gridcode = $this->payload['DataGridCode'];
+        $sql = " select  distinct  datagrid_code, column_field  from nanx_activity_column_order where datagrid_code='$gridcode'  ";
+        $Array_display_order = $this->db->query($sql)->result_array();
+        $_sorted_all = $this->MFieldcfg->_sortFieldDisplayOrder($this->payload['total_cols_cfg'], $Array_display_order);
+        $this->payload['total_cols_cfg'] = $_sorted_all;
+    }
 
 
     public function setFormUsedColumns() {
@@ -165,7 +177,7 @@ class MDataGridCfgExecutor extends CI_Model implements StageInterface {
                 }
             }
             if (!empty($col['editor_cfg']['trigger_cfg'])) {
-                $tmp['type'] = 'Assocselect';   //强制指定下.
+                $tmp['type'] = 'UAssocSelect';   //强制指定下.
             }
             $tmp['x-props'] = $this->getXprops($all_cols, $col);
             $ret->{$col['field_e']} = $tmp;
@@ -180,6 +192,10 @@ class MDataGridCfgExecutor extends CI_Model implements StageInterface {
         } else {
             $xprops = $this->getTriggerXprops($all_cols, $col);
         }
+
+        $xprops['default_v'] = $col['editor_cfg']['default_v'];
+        $xprops['defaultv_para'] = $col['editor_cfg']['defaultv_para'];
+
         return  $xprops;
     }
 

@@ -1,11 +1,8 @@
 <?php
 
 class MFieldcfg extends CI_Model {
-
-
-
     //all_db_fields 为所有字段, 获取所有的字段的配置,
-    function getAllColsCfg($datagrid_code, $base_table, $all_db_fields) {
+    public function getAllColsCfg($datagrid_code, $base_table, $all_db_fields) {
         $col_cfg = [];
         foreach ($all_db_fields as $db_field) {
             $tmp_cfg =  [];
@@ -18,7 +15,7 @@ class MFieldcfg extends CI_Model {
     }
 
 
-    function getDisplayCfg($datagrid_code,  $db_field) {
+    public function getDisplayCfg($datagrid_code, $db_field) {
 
         $title =  $db_field['Field'];
         $handler = null;
@@ -45,7 +42,7 @@ class MFieldcfg extends CI_Model {
     }
 
 
-    function getTriggerCfg($datagrid_code, $base_table, $field) {
+    public function getTriggerCfg($datagrid_code, $base_table, $field) {
         $where = array(
             'actcode' => $datagrid_code,
             'base_table' => $base_table,
@@ -60,7 +57,7 @@ class MFieldcfg extends CI_Model {
     }
 
 
-    function getCommonEditCfg($datagrid_code, $base_table, $field) {
+    public function getCommonEditCfg($datagrid_code, $base_table, $field) {
         $w1 = array(
             'datagrid_code' => $datagrid_code,
             'base_table' => $base_table,
@@ -73,22 +70,25 @@ class MFieldcfg extends CI_Model {
 
         if (empty($common)) {
             $common          = array();
-            $common['found'] = false;
             $common['uform_plugin'] = '';
             $common['uform_para'] = '';
+            $common['default_v'] = null;
+            $common['defaultv_para'] = null;
+
             unset($common['id']);
         } else {
             unset($common['base_table']);
             unset($common['field_e']);
             $common['uform_plugin'] = $common['uform_plugin'];
             $common['uform_para'] = $common['uform_para'];
-            $common['found'] = true;
+            $common['default_v'] =  $common['default_v'];
+            $common['defaultv_para'] =  $common['defaultv_para'];;
         }
         return $common;
     }
 
 
-    function getEditorCfg($datagrid_code, $base_table, $db_field) {
+    public function getEditorCfg($datagrid_code, $base_table, $db_field) {
         $editor_cfg = $this->getCommonEditCfg($datagrid_code, $base_table, $db_field['Field']);
         if (strlen($editor_cfg['uform_plugin']) < 3) {
             // 没有找到 特别的 uform_plugin 配置,根据数据库类型来转换
@@ -106,19 +106,19 @@ class MFieldcfg extends CI_Model {
 
 
     // 所有的隐藏字段,包括 form_hidden / column_hidden
-    function getForbiddenFields($activty_code, $type = null) {
+    public function getForbiddenFields($activty_code, $type = null) {
         if ($type === null) {
             $this->db->where(['datagrid_code' => $activty_code]);
-            $rows             = $this->db->get('nanx_activity_forbidden_field')->result_array();
+            $rows = $this->db->get('nanx_activity_forbidden_field')->result_array();
             return $rows;
         } else {
             $this->db->where(['datagrid_code' => $activty_code, 'forbidden_type' => $type]);
-            $rows             = $this->db->get('nanx_activity_forbidden_field')->result_array();
+            $rows = $this->db->get('nanx_activity_forbidden_field')->result_array();
             return $rows;
         }
     }
 
-    function getLeftJoinObject($basetable, $field, $combo_fileds) {
+    public function getLeftJoinObject($basetable, $field, $combo_fileds) {
 
         if ($field == 'id') {
             $transed = $basetable . "." . $field;
@@ -165,7 +165,7 @@ class MFieldcfg extends CI_Model {
     }
 
 
-    function toUnformType($field_type) {
+    public function toUnformType($field_type) {
 
         $uform_type = 'string';  // 即使找不到也缺省为 string
 
@@ -255,5 +255,31 @@ class MFieldcfg extends CI_Model {
         }
 
         return    $uform_type;
+    }
+
+
+
+    public function _sortFieldDisplayOrder($Array_all, $Array_display_order) {
+
+        $sortedArray_all = [];
+        foreach ($Array_display_order as $orderItem) {
+            $columnField = $orderItem['column_field'];
+
+            // 在 Array_all 中查找对应字段的配置
+            foreach ($Array_all as $item) {
+                if (isset($item['field_e']) && $item['field_e'] === $columnField) {
+                    $sortedArray_all[] = $item;
+                    break; // 找到对应字段后跳出循环
+                }
+            }
+        }
+
+        // 如果 Array_all 中有未包含在 Array_display_order 中的字段，添加到结果数组中
+        foreach ($Array_all as $item) {
+            if (!in_array($item, $sortedArray_all)) {
+                $sortedArray_all[] = $item;
+            }
+        }
+        return $sortedArray_all;
     }
 }
